@@ -427,3 +427,8 @@ FodyWeavers.xsd
 *.msix
 *.msm
 *.msp
+*.exe
+*.vcxproj
+*.sln
+reality_punk2/.idea
+*.filters
