@@ -16,8 +16,13 @@ struct Arena
     size_t offset;
 };
 
-Allocator Memory_MakeDefaultAllocator();
-Allocator Memory_MakeLinearArenaAllocator(Arena& arena);
+Allocator Memory_CreateDefaultAllocator();
+Allocator Memory_CreateLinearArenaAllocator(Arena& arena);
+Allocator Memory_CreateLinearArenaAllocator(Arena& arena);
+
+void* Memory_DefaultAlloc(void* ctx, size_t size, size_t alignment);
+void* Memory_DefaultRealloc(void* ctx, void* ptr, size_t size, size_t alignment);
+void Memory_DefaultFree(void* ctx, void* ptr);
 
 void* Arena_LinearAlloc(void* ctx, size_t size, size_t alignment);
 void* Arena_LinearAllocWrap(Arena& arena, size_t size, size_t alignment);

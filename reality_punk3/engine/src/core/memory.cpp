@@ -2,7 +2,16 @@
 
 #include <cassert>
 
-Allocator Memory_MakeLinearArenaAllocator(Arena &arena)
+Allocator Memory_CreateDefaultAllocator()
+{
+    Allocator allocator { };
+    allocator.ctx = nullptr;
+    allocator.alloc = Memory_DefaultAlloc;
+    allocator.realloc = Memory_DefaultRealloc;
+    allocator.free = Memory_DefaultFree;
+}
+
+Allocator Memory_CreateLinearArenaAllocator(Arena &arena)
 {
     Allocator allocator { };
     allocator.ctx = (void*)&arena;
