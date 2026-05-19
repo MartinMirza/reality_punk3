@@ -31,8 +31,8 @@ RP3String String_Concatenate(Allocator& allocator, RP3String string1, RP3String 
 RP3String String_Concatenate(Allocator& allocator, RP3String string1, StringView string2);
 RP3String String_Concatenate(Allocator& allocator, StringView string1, RP3String string2);
 RP3String String_Concatenate(Allocator& allocator, StringView string1, StringView string2);
-// RP3String String_FromView(StringView view);
-// StringBuilder StringBuilder_Create(Allocator* allocator);
+RP3String String_FromView(Allocator& allocator, StringView view);
+StringBuilder StringBuilder_Create(Allocator* allocator);
 // RP3String StringBuilder_Append(StringBuilder& builder, RP3String string);
 // RP3String StringBuilder_Append(StringBuilder& builder, StringView string);
 // RP3String StringBuilder_Append(StringBuilder& builder, const char* string);

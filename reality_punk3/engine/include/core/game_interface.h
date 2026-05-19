@@ -1,7 +1,8 @@
 #pragma once
-#include <string_view>
 
 #include "common.h"
+#include "keyboard.h"
+#include "rp3_string.h"
 
 #ifdef PLATFORM_WINDOWS
 #include <windows.h>
@@ -14,5 +15,33 @@ struct WindowSettings
 {
     u32 width;
     u32 height;
-    std::string_view title;
+    StringView title;
+};
+
+using RenderCommandBuffer = void*;
+
+struct GameMemory
+{
+    void* persistent_storage; // Persistent game state (e.g., assets, entities)
+    void* transient_storage; // Temporary memory (reset every frame)
+    RenderCommandBuffer* renderCommandBuffer;
+    
+    void* gameState = nullptr;
+    bool requestReinit = false;
+};
+
+struct GameWindowSettings
+{
+    u32 width;
+    u32 height;
+};
+
+using GameInitFunc = void(*)(GameMemory&, GameWindowSettings&);
+using GameUpdateAndRenderFunc = void(*)(GameMemory&, GameWindowSettings&, KeyboardState&, float delta_time);
+
+// The ONLY exported symbol from the game DLL
+struct GameAPI
+{
+    GameInitFunc game_init;
+    GameUpdateAndRenderFunc update_and_render;
 };

@@ -136,17 +136,17 @@ struct KeyboardState
     u8 down[(u16)Keyboard::KEY_COUNT];
 };
 
-inline bool Keyboard_KeyPressed(const KeyboardState* p_keyboard, Keyboard key)
+inline bool Keyboard_KeyPressed(const KeyboardState& keyboard, Keyboard key)
 {
-    return p_keyboard->pressed[(u16)key];
+    return keyboard.pressed[(u16)key];
 }
 
-inline bool Keyboard_IsKeyDown(const KeyboardState* p_keyboard, Keyboard key)
+inline bool Keyboard_IsKeyDown(const KeyboardState& keyboard, Keyboard key)
 {
-    return p_keyboard->down[(u16)key];
+    return keyboard.down[(u16)key];
 }
 
-inline bool Keyboard_IsKeyUp(const KeyboardState* p_keyboard, Keyboard key)
+inline bool Keyboard_IsKeyUp(const KeyboardState& keyboard, Keyboard key)
 {
-    return p_keyboard->up[(u16)key];
+    return keyboard.up[(u16)key];
 }

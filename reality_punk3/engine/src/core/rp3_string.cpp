@@ -93,6 +93,16 @@ RP3String String_Concatenate(Allocator& allocator, const StringView string1, con
     
     return { .buffer = AllocateConcatedString(allocator, string1.buffer, string2.buffer, length1, length2, total_length) };
 }
+RP3String String_FromView(Allocator& allocator, StringView view)
+{
+    char* mem = (char*)allocator.alloc(allocator.ctx, view.length + 1, alignof(char));
+    assert(mem != nullptr);
+    
+    memcpy(mem, view.buffer, view.length);
+    mem[view.length] = '\0';
+    
+    return { .buffer = mem };
+}
 
 
 
