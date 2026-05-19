@@ -52,7 +52,7 @@ inline RP3String String_Copy(Allocator& allocator, const RP3String string)
 static char* AllocateConcatedString(Allocator& allocator, const char* string1, const char* string2, const size_t length1, const size_t length2, const size_t total_length)
 {
     char* mem = (char*)allocator.alloc(allocator.ctx, total_length + 1, alignof(char));
-    assert(mem != nullptr); // i should raise a critidcal here
+    assert(mem != nullptr); // i should raise a critical here
     memcpy(mem, string1, length1);
     memcpy(mem + length1, string2, length2);
     mem[total_length] = '\0';
