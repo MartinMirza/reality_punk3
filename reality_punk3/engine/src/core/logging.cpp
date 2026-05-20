@@ -17,18 +17,18 @@ struct Node
 //TODO(MM): zamienic globale na pointery
 static struct State
 {
-    Node* head;
-    Node* tail;
+    Node* head { nullptr };
+    Node* tail { nullptr };
 } gState;
 
 static struct LogState
 {
-    SinkConfig* configs;
-    u32 configCount;
+    SinkConfig* configs { nullptr };
+    u32 configCount { 0 };
     
-    HANDLE fileHandle;
-    HANDLE consoleOutputHandle;
-    HANDLE consoleErrorHandle;
+    HANDLE fileHandle { nullptr };
+    HANDLE consoleOutputHandle { nullptr };
+    HANDLE consoleErrorHandle { nullptr };
     
     
 } gLogState;
@@ -149,7 +149,7 @@ void Logging_FlushLogState(Allocator &allocator)
                 RP3File file {};
                 if (File_Open(c.file.path, FileAccess::WRITE, FileCreation::RP3_OPEN_ALWAYS, 0, file))
                 {
-                    File_WriteString(file, file.view.size, output);
+                    File_WriteString(file, File_GetSize(file), output);
                     File_Close(file);
                 }
                 break;
