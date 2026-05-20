@@ -8,12 +8,14 @@
 RenderCommandQueue* RenderCommands_CreateRCQueue(Allocator& allocator)
 {
     
-    RenderCommandQueue* rc_buff = (RenderCommandQueue*)allocator.alloc(allocator.ctx, sizeof(RenderCommandQueue), alignof(RenderCommandQueue));
-    assert(rc_buff != nullptr);
+    RenderCommandQueue* rc_q = (RenderCommandQueue*)allocator.alloc(allocator.ctx, sizeof(RenderCommandQueue), alignof(RenderCommandQueue));
+    assert(rc_q != nullptr);
     
     static RenderCommand dummy {};
-    rc_buff->head = &dummy;
-    rc_buff->tail = &dummy;
+    rc_q->head = &dummy;
+    rc_q->tail = &dummy;
+    
+    return rc_q;
 }
 
 RenderCommand* RenderCommands_CreateRenderCommand(Allocator& allocator, RenderCommandType type, void *data)

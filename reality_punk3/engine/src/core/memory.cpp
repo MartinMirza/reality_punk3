@@ -10,6 +10,8 @@ Allocator Memory_CreateDefaultAllocator()
     allocator.alloc = Memory_DefaultAlloc;
     allocator.realloc = Memory_DefaultRealloc;
     allocator.free = Memory_DefaultFree;
+    
+    return allocator;
 }
 
 Allocator Memory_CreateLinearArenaAllocator(Arena &arena)

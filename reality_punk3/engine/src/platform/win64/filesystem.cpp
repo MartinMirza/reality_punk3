@@ -1,7 +1,7 @@
-#include "filesystem.h"
+#include <windows.h>
+
 #include "platform/win64/filesystem.h"
 
-#include <windows.h>
 
 // NT status codes
 #define STATUS_SUCCESS 0
@@ -78,18 +78,14 @@ static void EnsureNTDLLLoaded()
     (void)loaded;
 }
 
-// ============================================
-// Stack-based API
-// ============================================
-
-bool File_Open(File& file, RP3String path, FileAccess access, FileCreation creation, size_t reserve_size)
+bool File_Open(RP3String path, FileAccess access, FileCreation creation, size_t reserve_size, RP3File& out_file)
 {
     if (path.buffer == nullptr)
     {
         return false;
     }
 
-    memset(&file, 0, sizeof(file));
+    memset(&out_file, 0, sizeof(out_file));
 
     EnsureNTDLLLoaded();
 
@@ -169,9 +165,9 @@ bool File_Open(File& file, RP3String path, FileAccess access, FileCreation creat
         return false;
     }
 
-    file.file_handle = (FileHandle)win32_handle;
-    file.owns_file_handle = true;
-    file.is_nt_section = (access == FileAccess::READ_WRITE);
+    out_file.file_handle = (FileHandle)win32_handle;
+    out_file.owns_file_handle = true;
+    out_file.is_nt_section = (access == FileAccess::READ_WRITE);
 
     // Get current file size
     LARGE_INTEGER file_size;
@@ -183,7 +179,7 @@ bool File_Open(File& file, RP3String path, FileAccess access, FileCreation creat
     size_t current_size = (size_t)file_size.QuadPart;
 
     // For read-write with resizing support, use NT functions
-    if (file.is_nt_section)
+    if (out_file.is_nt_section)
     {
         // Create NT section
         LARGE_INTEGER max_size;
@@ -206,7 +202,7 @@ bool File_Open(File& file, RP3String path, FileAccess access, FileCreation creat
             return false;
         }
 
-        file.section_handle = section;
+        out_file.section_handle = section;
 
         // Map view with MEM_RESERVE
         size_t view_size = reserve_size > 0 ? reserve_size : current_size + GB;
@@ -233,10 +229,10 @@ bool File_Open(File& file, RP3String path, FileAccess access, FileCreation creat
             return false;
         }
 
-        file.view.data = data;
-        file.view.size = current_size;
-        file.view.capacity = view_size;
-        file.view.flags = FileViewFlags::WRITEABLE;
+        out_file.view.data = data;
+        out_file.view.size = current_size;
+        out_file.view.capacity = view_size;
+        out_file.view.flags = FileViewFlags::WRITEABLE;
     }
     else
     {
@@ -267,18 +263,18 @@ bool File_Open(File& file, RP3String path, FileAccess access, FileCreation creat
             return false;
         }
 
-        file.section_handle = mapping;
-        file.is_nt_section = false;
-        file.view.data = data;
-        file.view.size = current_size;
-        file.view.capacity = current_size;
-        file.view.flags = (access != FileAccess::READ) ? FileViewFlags::WRITEABLE : FileViewFlags::READ_ONLY;
+        out_file.section_handle = mapping;
+        out_file.is_nt_section = false;
+        out_file.view.data = data;
+        out_file.view.size = current_size;
+        out_file.view.capacity = current_size;
+        out_file.view.flags = (access != FileAccess::READ) ? FileViewFlags::WRITEABLE : FileViewFlags::READ_ONLY;
     }
 
     return true;
 }
 
-bool File_Close(File& file)
+bool File_Close(RP3File& file)
 {
     // Flush writes to disk
     if (((u32)file.view.flags & (u32)FileViewFlags::WRITEABLE) && file.view.data != nullptr)
@@ -315,10 +311,10 @@ bool File_Close(File& file)
     }
 
     // Close file handle
-    if (file.owns_file_handle && file.file_handle != INVALID_HANDLE_VALUE)
+    if (file.owns_file_handle && file.file_handle != (i32)INVALID_HANDLE_VALUE)
     {
         CloseHandle((HANDLE)(uptr)file.file_handle);
-        file.file_handle = INVALID_HANDLE_VALUE;
+        file.file_handle = (i32)INVALID_HANDLE_VALUE;
     }
 
     file.view.size = 0;
@@ -330,7 +326,7 @@ bool File_Close(File& file)
     return true;
 }
 
-bool File_Resize(File& file, size_t new_size)
+bool File_Resize(RP3File& file, size_t new_size)
 {
     if (file.is_nt_section == false)
     {
@@ -357,7 +353,7 @@ bool File_Resize(File& file, size_t new_size)
     return true;
 }
 
-bool File_Flush(File& file)
+bool File_Flush(RP3File& file)
 {
     if (file.view.data == nullptr)
     {
@@ -372,7 +368,7 @@ bool File_Flush(File& file)
     return FlushViewOfFile(file.view.data, file.view.size) != 0;
 }
 
-bool File_CreateReadOnlyView(const File& file, FileView& out_readonly_view)
+bool File_CreateReadOnlyView(const RP3File& file, FileView& out_readonly_view)
 {
     if (file.view.data == nullptr)
     {
@@ -409,36 +405,4 @@ bool File_CreateReadOnlyView(const File& file, FileView& out_readonly_view)
     out_readonly_view.flags = FileViewFlags::READ_ONLY;
 
     return true;
-}
-
-// ============================================
-// Heap-based API (Allocator semantics)
-// ============================================
-
-File* File_Create(Allocator& allocator, RP3String path, FileAccess access, FileCreation creation, size_t reserve_size)
-{
-    // Allocate File struct using the provided allocator
-    File* file = (File*)allocator.alloc(allocator.ctx, sizeof(File), alignof(File));
-    if (file == nullptr)
-    {
-        return nullptr;
-    }
-
-    // Initialize the file - this will map the actual file content via OS
-    if (File_Open(*file, path, access, creation, reserve_size) == false)
-    {
-        allocator.free(allocator.ctx, file);
-        return nullptr;
-    }
-
-    return file;
-}
-
-void File_Destroy(Allocator& allocator, File& file)
-{
-    // Close the file - this unmaps OS memory and closes handles
-    File_Close(file);
-
-    // Free the File struct itself (which was allocated via allocator.alloc)
-    allocator.free(allocator.ctx, &file);
 }
