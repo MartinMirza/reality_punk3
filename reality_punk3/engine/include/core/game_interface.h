@@ -15,7 +15,7 @@ struct WindowSettings
 {
     u32 width;
     u32 height;
-    StringView title;
+    RP3String title;
 };
 
 using RenderCommandBuffer = void*;

@@ -2,6 +2,7 @@
 
 #include <cassert>
 #include <cstring>
+#include <cstdio>
 
 StringView StringView_From(const RP3String string)
 {
@@ -103,6 +104,67 @@ RP3String String_FromView(Allocator& allocator, StringView view)
     
     return { .buffer = mem };
 }
+
+StringBuilder StringBuilder_Create(Allocator& allocator, size_t size)
+{
+    StringBuilder b {};
+    b.buffer = (char*)allocator.alloc(allocator.ctx, size, alignof(char));
+    b.capacity = size;
+    return b;
+}
+
+bool StringBuilder_Append(StringBuilder& builder, RP3String string)
+{
+    return StringBuilder_Append(builder, StringView_From(string));
+}
+
+bool StringBuilder_Append(StringBuilder& builder, StringView string)
+{
+    if (builder.buffer != nullptr && string.buffer != nullptr)
+    {
+        memcpy(builder.buffer, string.buffer, string.length);
+        builder.offset += string.length; 
+        
+        return true;
+    }
+    
+    return false;
+}
+
+bool StringBuilder_Append(StringBuilder &builder, const char* string)
+{
+    return StringBuilder_Append(builder, StringView_From( {string }));
+}
+
+bool StringBuilder_Append(StringBuilder& builder, i32 number)
+{
+    char scratch[10];
+    if (sprintf_s(scratch, "%d", number))
+    {
+        memcpy(builder.buffer + builder.offset, scratch, strlen(scratch));
+        return true;
+    }
+    
+    return false;
+}
+
+bool StringBuilder_Append(StringBuilder &builder, float number)
+{
+    char scratch[10];
+    if (sprintf_s(scratch, "%f", number))
+    {
+        memcpy(builder.buffer + builder.offset, scratch, strlen(scratch));
+        return true;
+    }
+    
+    return false;
+}
+
+
+
+
+
+
 
 
 

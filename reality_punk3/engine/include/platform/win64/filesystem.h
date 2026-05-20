@@ -6,7 +6,7 @@
 // Forward declare Windows types we use (avoid including windows.h in header)
 using HANDLE = void*;
 
-using FileHandle = u64;
+using FileHandle = i32;
 
 // Access modes for file mapping
 enum class FileAccess : u32
@@ -37,27 +37,33 @@ enum class FileViewFlags : u32
 // Memory-mapped view of a file
 struct FileView
 {
-    void* data;             // Pointer to OS memory-mapped file content
-    size_t size;            // Current committed size (actual file size on disk)
-    size_t capacity;        // Total reserved address space
-    FileViewFlags flags;    // View flags (readable/writable)
+    void* data;
+    size_t size;
+    size_t capacity;
+    FileViewFlags flags;
 };
 
 // Memory-mapped file handle
 struct RP3File
 {
-    FileHandle file_handle;    // Win32 file handle (i32)
-    HANDLE section_handle;     // NT section handle or WinAPI mapping handle
-    FileView view;            // Mapped view (view.data points to OS-mapped memory)
-    bool owns_file_handle;    // Whether we own the file handle (and should close it)
-    bool is_nt_section;       // Whether using NT functions (for resizing support)
+    FileHandle file_handle;
+    HANDLE section_handle;
+    FileView view;
+    bool owns_file_handle;
+    bool is_nt_section;
 };
 
-// Function declarations
 // Stack-based API (caller provides File storage on stack)
 bool File_Open(RP3String path, FileAccess access, FileCreation creation, size_t reserve_size, RP3File& out_file);
 bool File_Close(RP3File& file);
-bool File_Resize(RP3File& file, size_t new_size);
+bool File_ExtendSection(RP3File& file, size_t new_size);
 bool File_Flush(RP3File& file);
-bool File_CreateReadOnlyView(const RP3File& file, FileView& out_readonly_view);
+void* File_GetData(RP3File& file);
+size_t File_GetSize(RP3File& file);
+size_t File_GetCapacity(RP3File& file);
 
+// Convenience write functions (auto-resize)
+bool File_Write(RP3File& file, size_t offset, const void* data, size_t size);
+bool File_Append(RP3File& file, const void* data, size_t size);
+bool File_WriteString(RP3File& file, size_t offset, RP3String str);
+bool File_AppendString(RP3File& file, RP3String str);

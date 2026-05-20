@@ -1,7 +1,6 @@
-#include <windows.h>
-
 #include "platform/win64/filesystem.h"
 
+#include <windows.h>
 
 // NT status codes
 #define STATUS_SUCCESS 0
@@ -47,7 +46,7 @@ static NtUnmapViewOfSectionFn NtUnmapViewOfSection = nullptr;
 static NtExtendSectionFn NtExtendSection = nullptr;
 
 // Section attributes
-#define SEC_RESERVE 0x4000000
+#define RP3_SEC_RESERVE 0x4000000
 
 static bool LoadNTDLLFunctions()
 {
@@ -77,6 +76,10 @@ static void EnsureNTDLLLoaded()
     static bool loaded = LoadNTDLLFunctions();
     (void)loaded;
 }
+
+// ============================================
+// Stack-based API
+// ============================================
 
 bool File_Open(RP3String path, FileAccess access, FileCreation creation, size_t reserve_size, RP3File& out_file)
 {
@@ -165,34 +168,35 @@ bool File_Open(RP3String path, FileAccess access, FileCreation creation, size_t 
         return false;
     }
 
-    out_file.file_handle = (FileHandle)win32_handle;
+    out_file.file_handle = (FileHandle)(uptr)win32_handle;
     out_file.owns_file_handle = true;
-    out_file.is_nt_section = (access == FileAccess::READ_WRITE);
+    out_file.is_nt_section = (access != FileAccess::READ);
 
     // Get current file size
-    LARGE_INTEGER file_size;
-    if (GetFileSizeEx(win32_handle, &file_size) == 0)
+    LARGE_INTEGER file_size_large;
+    if (GetFileSizeEx(win32_handle, &file_size_large) == 0)
     {
         CloseHandle(win32_handle);
         return false;
     }
-    size_t current_size = (size_t)file_size.QuadPart;
+    size_t current_size = (size_t)file_size_large.QuadPart;
 
     // For read-write with resizing support, use NT functions
     if (out_file.is_nt_section)
     {
-        // Create NT section
-        LARGE_INTEGER max_size;
-        max_size.QuadPart = reserve_size > 0 ? reserve_size : current_size + GB;
+        // FIX: Pass actual file size (or 1 for new files) to NtCreateSection
+        // This does NOT grow the file unnecessarily
+        LARGE_INTEGER section_size;
+        section_size.QuadPart = reserve_size > 0 ? reserve_size : 1;
 
         HANDLE section = nullptr;
         NTSTATUS status = NtCreateSection(
             &section,
             section_access,
             nullptr,
-            &max_size,
+            &section_size,
             page_protection,
-            SEC_RESERVE,
+            RP3_SEC_RESERVE,
             win32_handle
         );
 
@@ -204,8 +208,8 @@ bool File_Open(RP3String path, FileAccess access, FileCreation creation, size_t 
 
         out_file.section_handle = section;
 
-        // Map view with MEM_RESERVE
-        size_t view_size = reserve_size > 0 ? reserve_size : current_size + GB;
+        // Reserve large address space here (reserve_size), but only commit current_size
+        size_t view_size = current_size;
         void* data = nullptr;
 
         LARGE_INTEGER section_offset = { };
@@ -217,7 +221,7 @@ bool File_Open(RP3String path, FileAccess access, FileCreation creation, size_t 
             current_size,
             &section_offset,
             &view_size,
-            SECTION_INHERIT::ViewUnmap,
+            ViewUnmap,
             MEM_RESERVE,
             page_protection
         );
@@ -326,7 +330,7 @@ bool File_Close(RP3File& file)
     return true;
 }
 
-bool File_Resize(RP3File& file, size_t new_size)
+bool File_ExtendSection(RP3File& file, size_t new_size)
 {
     if (file.is_nt_section == false)
     {
@@ -368,41 +372,67 @@ bool File_Flush(RP3File& file)
     return FlushViewOfFile(file.view.data, file.view.size) != 0;
 }
 
-bool File_CreateReadOnlyView(const RP3File& file, FileView& out_readonly_view)
+void* File_GetData(RP3File& file)
 {
-    if (file.view.data == nullptr)
+    return file.view.data;
+}
+
+size_t File_GetSize(RP3File& file)
+{
+    return file.view.size;
+}
+
+size_t File_GetCapacity(RP3File& file)
+{
+    return file.view.capacity;
+}
+
+bool File_Write(RP3File &file, size_t offset, const void *data, size_t size)
+{
+    if (data == nullptr)
     {
         return false;
     }
-
-    HANDLE section = file.section_handle;
-
-    // Create a second read-only mapping of the same section
-    void* readonly_data = nullptr;
-    SIZE_T view_size = file.view.capacity;
-
-    NTSTATUS status = NtMapViewOfSection(
-        section,
-        GetCurrentProcess(),
-        &readonly_data,
-        0,
-        0,
-        nullptr,
-        &view_size,
-        ViewUnmap,
-        MEM_RESERVE,
-        PAGE_READONLY
-    );
-
-    if (status != STATUS_SUCCESS)
+    
+    const size_t required_size = offset + size;
+    
+    if (required_size > file.view.capacity)
     {
         return false;
     }
+    
+    if (required_size <= file.view.capacity)
+    {
+        memcpy((u8*)file.view.data + offset, data, size);
+        file.view.size += size;
+        return true;
+    }
+    
+    if (File_ExtendSection(file, required_size))
+    {
+        memcpy((u8*)file.view.data + offset, data, size);
+        file.view.size += size;
+        return true;
+    }
+    
+    return false;
+}
 
-    out_readonly_view.data = readonly_data;
-    out_readonly_view.size = file.view.size;
-    out_readonly_view.capacity = file.view.capacity;
-    out_readonly_view.flags = FileViewFlags::READ_ONLY;
+bool File_Append(RP3File& file, const void* data, size_t size)
+{
+    return File_Write(file, file.view.size, data, size);
+}
 
-    return true;
+bool File_WriteString(RP3File& file, size_t offset, RP3String str)
+{
+    if (str.buffer == nullptr)
+    {
+        return false;
+    }
+    return File_Write(file, offset, str.buffer, strlen(str.buffer));
+}
+
+bool File_AppendString(RP3File& file, RP3String str)
+{
+    return File_WriteString(file, file.view.size, str);
 }

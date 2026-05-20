@@ -4,20 +4,23 @@
 //guaranteed to be null terminated
 struct RP3String
 {
-    const char* buffer;
+    const char* buffer { nullptr };
 };
 
 //not guaranteed to be null terminated
 struct StringView
 {
-    const char* buffer;
-    size_t length;
+    const char* buffer { nullptr };
+    size_t length { 0 };
 };
 
 struct StringBuilder
 {
-    Allocator* allocator;
-    RP3String output;
+    //buffer is not null terminated unless it was done explicitly!
+    //so you can just append by '\0' to make it string or wrap into StringView grabbing offset
+    char* buffer { nullptr };
+    size_t offset { 0 };
+    size_t capacity { 0 };
 };
 
 StringView StringView_From(RP3String string);
@@ -32,10 +35,10 @@ RP3String String_Concatenate(Allocator& allocator, RP3String string1, StringView
 RP3String String_Concatenate(Allocator& allocator, StringView string1, RP3String string2);
 RP3String String_Concatenate(Allocator& allocator, StringView string1, StringView string2);
 RP3String String_FromView(Allocator& allocator, StringView view);
-StringBuilder StringBuilder_Create(Allocator* allocator);
-// RP3String StringBuilder_Append(StringBuilder& builder, RP3String string);
-// RP3String StringBuilder_Append(StringBuilder& builder, StringView string);
-// RP3String StringBuilder_Append(StringBuilder& builder, const char* string);
-// RP3String StringBuilder_Append(StringBuilder& builder, i32 number);
-// RP3String StringBuilder_Append(StringBuilder& builder, float number);
+StringBuilder StringBuilder_Create(Allocator& allocator, size_t size);
+bool StringBuilder_Append(StringBuilder& builder, RP3String string);
+bool StringBuilder_Append(StringBuilder& builder, StringView string);
+bool StringBuilder_Append(StringBuilder& builder, const char* string);
+bool StringBuilder_Append(StringBuilder& builder, i32 number);
+bool StringBuilder_Append(StringBuilder& builder, float number);
 

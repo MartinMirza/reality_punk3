@@ -368,10 +368,10 @@
 int WINAPI WinMain(HINSTANCE instance, HINSTANCE previous_instance, PSTR command_line, int show_code)
 {
     RP3String test { "Srac , czy spac" };
-    StringView test_view = StringView_From(test);
+    RP3String test_view = StringView_From(test);
     
-    StringView first;
-    StringView second;
+    RP3String first;
+    RP3String second;
     
     StringView_Split(',', test_view ,first, second);
     
@@ -399,10 +399,7 @@ int WINAPI WinMain(HINSTANCE instance, HINSTANCE previous_instance, PSTR command
     RP3File f { };
     if (File_Open({ "somefile.txt" }, FileAccess::READ_WRITE, FileCreation::RP3_OPEN_ALWAYS, 500 * sizeof(char), f))
     {
-        void* p_file = f.view.data;
-        memcpy(p_file, concated_again.buffer, strlen(concated_again.buffer));
-        f.view.size = strlen(concated_again.buffer);
-        File_Close(f);
+        File_WriteString(f, 0, concated_again);
     }
     
     return 0;
