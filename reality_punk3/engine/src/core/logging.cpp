@@ -51,7 +51,7 @@ static void Queue_Push(Node* n)
 static thread_local Allocator gAllocator;
 static thread_local StringBuilder gBuilder;
 
-void Logging_CreateLogState(Allocator &allocator, const SinkInitializerList &config_init_list)
+void Logging_CreateLogState(Allocator& allocator, const SinkInitializerList &config_init_list)
 {
     Queue_Init();
     gLogState.configs = (SinkConfig*)allocator.alloc(allocator.ctx, sizeof(SinkConfig) * config_init_list.count, alignof(SinkConfig));
@@ -146,7 +146,7 @@ void Logging_FlushLogState(Allocator &allocator)
                 break;
             case SinkType::FILE:
                 const SinkConfig& c = gLogState.configs[i];
-                RP3File file {};
+                RP3File file { };
                 if (File_Open(c.file.path, FileAccess::WRITE, FileCreation::RP3_OPEN_ALWAYS, 0, file))
                 {
                     File_WriteString(file, File_GetSize(file), output);

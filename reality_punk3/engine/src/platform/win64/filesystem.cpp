@@ -77,10 +77,6 @@ static void EnsureNTDLLLoaded()
     (void)loaded;
 }
 
-// ============================================
-// Stack-based API
-// ============================================
-
 bool File_Open(RP3String path, FileAccess access, FileCreation creation, size_t reserve_size, RP3File& out_file)
 {
     if (path.buffer == nullptr)
@@ -179,13 +175,11 @@ bool File_Open(RP3String path, FileAccess access, FileCreation creation, size_t 
         CloseHandle(win32_handle);
         return false;
     }
-    size_t current_size = (size_t)file_size_large.QuadPart;
+    size_t file_size = (size_t)file_size_large.QuadPart;
 
     // For read-write with resizing support, use NT functions
     if (out_file.is_nt_section)
     {
-        // FIX: Pass actual file size (or 1 for new files) to NtCreateSection
-        // This does NOT grow the file unnecessarily
         LARGE_INTEGER section_size;
         section_size.QuadPart = reserve_size > 0 ? reserve_size : 1;
 
@@ -208,8 +202,7 @@ bool File_Open(RP3String path, FileAccess access, FileCreation creation, size_t 
 
         out_file.section_handle = section;
 
-        // Reserve large address space here (reserve_size), but only commit current_size
-        size_t view_size = current_size;
+        size_t view_size = file_size;
         void* data = nullptr;
 
         LARGE_INTEGER section_offset = { };
@@ -218,7 +211,7 @@ bool File_Open(RP3String path, FileAccess access, FileCreation creation, size_t 
             GetCurrentProcess(),
             &data,
             0,
-            current_size,
+            file_size,
             &section_offset,
             &view_size,
             ViewUnmap,
@@ -234,7 +227,7 @@ bool File_Open(RP3String path, FileAccess access, FileCreation creation, size_t 
         }
 
         out_file.view.data = data;
-        out_file.view.size = current_size;
+        out_file.view.size = file_size;
         out_file.view.capacity = view_size;
         out_file.view.flags = FileViewFlags::WRITEABLE;
     }
@@ -270,8 +263,8 @@ bool File_Open(RP3String path, FileAccess access, FileCreation creation, size_t 
         out_file.section_handle = mapping;
         out_file.is_nt_section = false;
         out_file.view.data = data;
-        out_file.view.size = current_size;
-        out_file.view.capacity = current_size;
+        out_file.view.size = file_size;
+        out_file.view.capacity = file_size;
         out_file.view.flags = (access != FileAccess::READ) ? FileViewFlags::WRITEABLE : FileViewFlags::READ_ONLY;
     }
 

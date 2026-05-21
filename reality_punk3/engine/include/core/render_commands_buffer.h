@@ -12,15 +12,15 @@ enum class RenderCommandType : u8
 struct RenderCommand
 {
     RenderCommandType type { RenderCommandType::NONE };
-    void* data { nullptr};
+    void* data { nullptr };
     
     RenderCommand* next { nullptr };
 };
 
 struct RenderCommandQueue
 {
-    RenderCommand* head { nullptr};
-    RenderCommand* tail { nullptr};
+    RenderCommand* head { nullptr }; 
+    RenderCommand* tail { nullptr };
 };
 
 RenderCommandQueue* RenderCommands_CreateRCQueue(Allocator& allocator);

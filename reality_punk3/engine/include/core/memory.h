@@ -11,9 +11,9 @@ struct Allocator
 
 struct Arena
 {
-    u8* buffer;
-    size_t capacity;     
-    size_t offset;
+    u8* buffer { nullptr };
+    size_t capacity { 0 };     
+    size_t offset { 0 };
 };
 
 Allocator Memory_CreateDefaultAllocator();

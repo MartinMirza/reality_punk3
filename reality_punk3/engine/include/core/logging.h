@@ -2,6 +2,8 @@
 #include "common.h"
 #include "rp3_string.h"
 
+#define BUFFER_SIZE 256
+
 #if 0
 #define RP2_LOG_TRACE(format, ...)
 #define RP2_LOG_INFO(format, ...)
@@ -13,19 +15,19 @@
 
 #ifdef DEBUG
     #define RP2_LOG_TRACE(format, ...) do { \
-    char buffer[256]; \
+    char buffer[BUFFER_SIZE]; \
     snprintf(buffer, sizeof(buffer), format, __VA_ARGS__); \
     RP2::Log::Write(RP2::Log::LevelType::TRACE, Str::AsView(buffer)); \
     } while(0)
 
     #define RP2_LOG_INFO(format, ...) do { \
-    char buffer[256]; \
+    char buffer[BUFFER_SIZE]; \
     snprintf(buffer, sizeof(buffer), format, __VA_ARGS__); \
     RP2::Log::Write(RP2::Log::LevelType::INFO, Str::AsView(buffer)); \
     } while(0)
 
     #define RP2_LOG_WARN(format, ...) do { \
-    char buffer[256]; \
+    char buffer[BUFFER_SIZE]; \
     snprintf(buffer, sizeof(buffer), format, __VA_ARGS__); \
     RP2::Log::Write(RP2::Log::LevelType::WARN, Str::AsView(buffer)); \
     } while(0)
@@ -38,13 +40,13 @@
 
 // Always available
 #define RP2_LOG_ERROR(format, ...) do { \
-char buffer[256]; \
+char buffer[BUFFER_SIZE]; \
 snprintf(buffer, sizeof(buffer), format, __VA_ARGS__); \
 RP2::Log::Write(RP2::Log::LevelType::RP2_ERROR, Str::AsView(buffer)); \
 } while(0)
 
 #define RP2_LOG_CRITICAL(format, ...) do { \
-char buffer[256]; \
+char buffer[BUFFER_SIZE]; \
 snprintf(buffer, sizeof(buffer), format, __VA_ARGS__); \
 RP2::Log::Write(RP2::Log::LevelType::CRITICAL, Str::AsView(buffer)); \
 } while(0)

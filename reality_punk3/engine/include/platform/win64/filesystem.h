@@ -1,11 +1,9 @@
 #pragma once
 #include "core/common.h"
-#include "core/memory.h"
 #include "core/rp3_string.h"
 
 // Forward declare Windows types we use (avoid including windows.h in header)
 using HANDLE = void*;
-
 using FileHandle = i32;
 
 // Access modes for file mapping

@@ -26,7 +26,7 @@ struct StringBuilder
 StringView StringView_From(RP3String string);
 StringView StringView_ChopLeft(StringView view, u64 num_chopped);
 StringView StringView_ChopRight(StringView view, u64 num_chopped);
-bool StringView_Split (char delimiter, StringView view, StringView& out_first, StringView& out_second);
+bool StringView_Split(char delimiter, StringView view, StringView& out_first, StringView& out_second);
 
 RP3String String_Create(Allocator& allocator, const char* string);
 RP3String String_Copy(Allocator& allocator, RP3String string);

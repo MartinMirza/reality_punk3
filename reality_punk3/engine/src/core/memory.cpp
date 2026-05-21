@@ -25,21 +25,32 @@ Allocator Memory_CreateLinearArenaAllocator(Arena &arena)
     return allocator;
 }
 
-void* Memory_DefaultAlloc(void *ctx, size_t size, size_t alignment)
+Allocator Memory_CreateRingArenaAllocator(Arena &arena)
+{
+    Allocator allocator { };
+    allocator.ctx = (void*)&arena;
+    allocator.alloc = Arena_LinearAllocWrap;
+    allocator.realloc = Arena_Realloc;
+    allocator.free = Arena_Free;
+    
+    return allocator;
+}
+
+void* Memory_DefaultAlloc(void* ctx, size_t size, size_t alignment)
 {
      return malloc(size);   
 }
-void* Memory_DefaultRealloc(void *ctx, void *ptr, size_t size, size_t alignment)
+void* Memory_DefaultRealloc(void* ctx, void *ptr, size_t size, size_t alignment)
 {
     return realloc(ptr, size);
 }
 
-void Memory_DefaultFree(void *ctx, void *ptr)
+void Memory_DefaultFree(void* ctx, void *ptr)
 {
     free(ptr);
 }
 
-void* Arena_LinearAlloc(void *ctx, const size_t size, const size_t alignment)
+void* Arena_LinearAlloc(void* ctx, const size_t size, const size_t alignment)
 {
     Arena* a = (Arena*)ctx;
 
