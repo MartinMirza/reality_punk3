@@ -35,6 +35,13 @@ Allocator Memory_CreateRingArenaAllocator(Arena &arena)
     
     return allocator;
 }
+Allocator Memory_CreatePoolAllocator(Pool &pool)
+{
+    uptr initial_start = (uptr)pool.buffer;
+    uptr start = Memory_AlignUp(initial_start, pool.alignment);
+    pool.chunk_size = Memory_AlignUp(pool.chunk_size, pool.alignment);
+    
+}
 
 void* Memory_DefaultAlloc(void* ctx, size_t size, size_t alignment)
 {
@@ -91,6 +98,10 @@ void* Arena_LinearAllocWrap(void* ctx, const size_t size, const size_t alignment
     a->offset = aligned_offset + size;
     
     return result;
+}
+void* Pool_Alloc(void *ctx, size_t size, size_t alignment)
+{
+    
 }
 
 uptr Memory_GetAlignedOffset(u8* buffer, size_t offset, size_t alignment)

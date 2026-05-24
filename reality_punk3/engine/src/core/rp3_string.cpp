@@ -122,7 +122,7 @@ bool StringBuilder_Append(StringBuilder& builder, StringView string)
 {
     if (builder.buffer != nullptr && string.buffer != nullptr)
     {
-        memcpy(builder.buffer, string.buffer, string.length);
+        memcpy(builder.buffer + builder.offset, string.buffer, string.length);
         builder.offset += string.length; 
         
         return true;

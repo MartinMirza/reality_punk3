@@ -17,19 +17,19 @@
     #define RP2_LOG_TRACE(format, ...) do { \
     char buffer[BUFFER_SIZE]; \
     snprintf(buffer, sizeof(buffer), format, __VA_ARGS__); \
-    RP2::Log::Write(RP2::Log::LevelType::TRACE, Str::AsView(buffer)); \
+    Logging_Write(LevelType::TRACE, { buffer }); \
     } while(0)
 
     #define RP2_LOG_INFO(format, ...) do { \
     char buffer[BUFFER_SIZE]; \
     snprintf(buffer, sizeof(buffer), format, __VA_ARGS__); \
-    RP2::Log::Write(RP2::Log::LevelType::INFO, Str::AsView(buffer)); \
+    Logging_Write(LevelType::INFO, { buffer }); \
     } while(0)
 
     #define RP2_LOG_WARN(format, ...) do { \
     char buffer[BUFFER_SIZE]; \
     snprintf(buffer, sizeof(buffer), format, __VA_ARGS__); \
-    RP2::Log::Write(RP2::Log::LevelType::WARN, Str::AsView(buffer)); \
+    Logging_Write(LevelType::WARN, { buffer }); \
     } while(0)
 #else
     #define RP2_LOG_TRACE(format, ...)
@@ -42,13 +42,13 @@
 #define RP2_LOG_ERROR(format, ...) do { \
 char buffer[BUFFER_SIZE]; \
 snprintf(buffer, sizeof(buffer), format, __VA_ARGS__); \
-RP2::Log::Write(RP2::Log::LevelType::RP2_ERROR, Str::AsView(buffer)); \
+Logging_Write(LevelType::RP2_ERROR, { buffer }); \
 } while(0)
 
 #define RP2_LOG_CRITICAL(format, ...) do { \
 char buffer[BUFFER_SIZE]; \
 snprintf(buffer, sizeof(buffer), format, __VA_ARGS__); \
-RP2::Log::Write(RP2::Log::LevelType::CRITICAL, Str::AsView(buffer)); \
+Logging_Write(LevelType::CRITICAL, { buffer }); \
 } while(0)
 
 enum class SinkType : u8

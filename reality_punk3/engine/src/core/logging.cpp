@@ -1,6 +1,7 @@
 #include "core/logging.h"
 
 #include <cassert>
+#include <new>
 
 #include "core/game_interface.h"
 #include "platform/win64/filesystem.h"
@@ -48,8 +49,6 @@ static void Queue_Push(Node* n)
     prev->next = n;
 } 
 
-static thread_local Allocator gAllocator;
-static thread_local StringBuilder gBuilder;
 
 void Logging_CreateLogState(Allocator& allocator, const SinkInitializerList &config_init_list)
 {
@@ -86,10 +85,17 @@ void Logging_CreateLogState(Allocator& allocator, const SinkInitializerList &con
         }
     }
 }
+
+namespace
+{
+thread_local Allocator gAllocator { };
+thread_local StringBuilder gBuilder { };
+}
+
 void Logging_InitializeThreadLocal(Allocator& thread_local_allocator)
 {
-    gAllocator = thread_local_allocator;
-    gBuilder = StringBuilder_Create(gAllocator, KB);
+    new (&gAllocator) Allocator(thread_local_allocator);
+    gBuilder = StringBuilder_Create(gAllocator, 1024);
 }
 
 void Logging_Write(LevelType level, RP3String str)
@@ -145,6 +151,7 @@ void Logging_FlushLogState(Allocator &allocator)
             case SinkType::NONE:
                 break;
             case SinkType::FILE:
+            {
                 const SinkConfig& c = gLogState.configs[i];
                 RP3File file { };
                 if (File_Open(c.file.path, FileAccess::WRITE, FileCreation::RP3_OPEN_ALWAYS, 0, file))
@@ -152,6 +159,7 @@ void Logging_FlushLogState(Allocator &allocator)
                     File_WriteString(file, File_GetSize(file), output);
                     File_Close(file);
                 }
+            }
                 break;
             case SinkType::CONSOLE:
                 break;

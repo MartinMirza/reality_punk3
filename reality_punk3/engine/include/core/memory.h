@@ -16,9 +16,24 @@ struct Arena
     size_t offset { 0 };
 };
 
+
+struct Pool
+{
+    using Pool_Free_Node = void*;
+    
+    u8* buffer { nullptr };
+    size_t capacity { 0 };
+    size_t chunk_size { 0 };
+    uptr alignment { 0 };
+    
+    Pool_Free_Node* next { nullptr }; 
+};
+
+
 Allocator Memory_CreateDefaultAllocator();
 Allocator Memory_CreateLinearArenaAllocator(Arena& arena);
 Allocator Memory_CreateRingArenaAllocator(Arena& arena);
+Allocator Memory_CreatePoolAllocator(Pool& pool);
 
 void* Memory_DefaultAlloc(void* ctx, size_t size, size_t alignment);
 void* Memory_DefaultRealloc(void* ctx, void* ptr, size_t size, size_t alignment);
@@ -28,6 +43,10 @@ void* Arena_LinearAlloc(void* ctx, size_t size, size_t alignment);
 void* Arena_LinearAllocWrap(void* ctx, size_t size, size_t alignment);
 inline void* Arena_Realloc(void* ctx, void* ptr, size_t size, size_t alignment) { return nullptr; }
 inline void Arena_Free(void* ctx, void* ptr) {};
+
+void* Pool_Alloc(void* ctx, size_t size, size_t alignment);
+void* Pool_Realloc(void* ctx, void* ptr, size_t size, size_t alignment);
+void Pool_Free(void* ctx, void* ptr);
 
 uptr Memory_AlignUp(uptr address_before_alignment, size_t alignment);
 uptr Memory_GetAlignedOffset(u8* buffer, size_t offset, size_t alignment);

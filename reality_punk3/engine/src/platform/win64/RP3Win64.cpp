@@ -4,6 +4,7 @@
 
  #include "core/rp3_string.h"
  #include "core/game_interface.h"
+#include "core/logging.h"
 #include "platform/win64/filesystem.h"
 // #include "core/keyboard.h"
 // #include "platform/win64/RenderThread.h"
@@ -368,22 +369,35 @@
 int WINAPI WinMain(HINSTANCE instance, HINSTANCE previous_instance, PSTR command_line, int show_code)
 {
     RP3String test { "Srac , czy spac" };
-    RP3String test_view = StringView_From(test);
+    StringView test_view = StringView_From(test);
     
-    RP3String first;
-    RP3String second;
+    StringView first;
+    StringView second;
     
     StringView_Split(',', test_view ,first, second);
     
     RP3String test1 { "Jebanie na sniadanie" };
     
-    u8 scratch[800];
-    Arena a { .buffer = scratch, .capacity = 800, .offset = 0 };
+    
+    u8 scratch[2 * KB];
+    Arena a { .buffer = scratch, .capacity = 2 * KB, .offset = 0 };
     Allocator arena_alloc = Memory_CreateLinearArenaAllocator(a);
 
+    SinkInitializerList init_list {};
+    FileSinkConfig file_sink_config {};
+    file_sink_config.flush_on_write = false;
+    file_sink_config.path = {"somefile.txt"};
+    init_list.configs[0] = { .type = SinkType::FILE, .file = file_sink_config };
+    Logging_CreateLogState(arena_alloc, init_list);
+    Logging_InitializeThreadLocal(arena_alloc);
+    RP2_LOG_INFO("Heloł");
     RP3String concated = String_Concatenate(arena_alloc, test, test1);
     RP3String concated_again = String_Concatenate(arena_alloc, concated, second);
-    
+    // StringBuilder b = StringBuilder_Create(arena_alloc, 200);
+    // StringBuilder_Append(b, concated_again);
+    // StringBuilder_Append(b, " I tak właśnie no i chuj");
+    // StringView output { .buffer = b.buffer, .length = b.offset };
+    //
     char b1[256];
     for (int i = 0; i < first.length; ++i)
     {
